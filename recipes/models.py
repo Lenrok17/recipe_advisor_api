@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from products.models import Product, Unit
 
 class RecipeCategory(models.Model):
@@ -10,9 +11,10 @@ class RecipeCategory(models.Model):
 class Recipe(models.Model):
     category = models.ForeignKey(RecipeCategory, on_delete=models.PROTECT, blank=True, null=True)
     title = models.CharField(max_length=255)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     prepare_time = models.PositiveSmallIntegerField() # in minutes
     description = models.TextField()
-    image_path = models.URLField(blank=True, null=True)
+    image_path = models.ImageField(upload_to='recipes/', blank=True, null=True)
 
     def __str__(self):
         return self.title

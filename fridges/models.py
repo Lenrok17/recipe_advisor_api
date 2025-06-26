@@ -1,10 +1,9 @@
 from django.db import models
-
-from accounts.models import User
+from django.conf import settings
 from products.models import Product, Unit
 
 class Fridge(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='fridge')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='fridge')
 
 class FridgeProduct(models.Model):
     fridge = models.ForeignKey(Fridge, on_delete=models.CASCADE)

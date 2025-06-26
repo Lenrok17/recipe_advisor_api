@@ -16,7 +16,7 @@ class ProductCategory(models.Model):
         return self.name
 
 class Product(models.Model):
-    category = models.ForeignKey(ProductCategory, on_delete=models.PROTECT, blank=True, null=True)
+    category = models.ForeignKey(ProductCategory, on_delete=models.PROTECT, blank=True, null=True, related_name='products')
     name = models.CharField(max_length=255)
 
     def __str__(self):
