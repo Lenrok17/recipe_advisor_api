@@ -3,9 +3,11 @@ from rest_framework import serializers
 from .models import Product, ProductCategory
 
 class ProductCategorySerializer(serializers.ModelSerializer):
+    products_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = ProductCategory
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'products_count']
 
 class ProductSerializer(serializers.ModelSerializer):
     category = ProductCategorySerializer(read_only=True)
