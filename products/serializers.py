@@ -19,7 +19,7 @@ class SimpleProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'name']
 
-class ProductAddSerializer(serializers.ModelSerializer):
+class ProductAddUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'category', 'name']

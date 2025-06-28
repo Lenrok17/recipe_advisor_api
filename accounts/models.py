@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from recipes.models import Recipe
 
 class User(AbstractUser):
-    pass
+    email = models.EmailField(unique=True)
 
 class FavouriteRecipe(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
