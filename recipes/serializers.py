@@ -14,7 +14,7 @@ class RecipeCategorySerializer(serializers.ModelSerializer):
         model = RecipeCategory
         fields = ['id', 'name', 'recipes_count', 'recipes']
 
-class RecipeCategoryAddUpdateSerializer(serializers.ModelSerializer):
+class SimpleRecipeCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeCategory
         fields = ['id', 'name']
@@ -42,8 +42,8 @@ class SimpleRecipeIngredientSerializer(RecipeIngredientSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = RecipeIngredientSerializer(many=True, read_only=True)
-    author = serializers.CharField(source='author.username')
-    category = RecipeCategorySerializer(read_only=True)
+    author = serializers.CharField(source='author.username', read_only=True)
+    category = SimpleRecipeCategorySerializer(read_only=True)
 
     class Meta:
         model = Recipe
@@ -51,3 +51,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 class RecipeDetailsSerializer(RecipeSerializer):
     ingredients = SimpleRecipeIngredientSerializer(many=True, read_only=True)
+
+class RecipeAddUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ['id', 'category', 'title', 'prepare_time', 'description', 'image']
