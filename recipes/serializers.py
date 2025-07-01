@@ -3,6 +3,8 @@ from rest_framework import serializers
 from products.serializers import SimpleProductSerializer
 from .models import Recipe, RecipeCategory, RecipeIngredient
 
+from products.serializers import SimpleProductSerializer
+
 ###############################################
 ##### RECIPE CATEGORY SERIALIZERS #############
 ###############################################
@@ -33,8 +35,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ['id', 'product', 'quantity', 'unit']
 
-class SimpleRecipeIngredientSerializer(RecipeIngredientSerializer):
-    product = serializers.CharField(source='product.name')
+class RecipeIngredientDetailsSerializer(RecipeIngredientSerializer):
+    product = SimpleProductSerializer()
 
 ###############################################
 ############ RECIPE SERIALIZERS ###############
@@ -50,7 +52,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = ['id', 'category', 'title', 'author', 'prepare_time', 'ingredients', 'description', 'image']
 
 class RecipeDetailsSerializer(RecipeSerializer):
-    ingredients = SimpleRecipeIngredientSerializer(many=True, read_only=True)
+    ingredients = RecipeIngredientDetailsSerializer(many=True, read_only=True)
 
 class RecipeAddUpdateSerializer(serializers.ModelSerializer):
     class Meta:
