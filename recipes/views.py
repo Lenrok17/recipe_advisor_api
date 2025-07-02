@@ -1,7 +1,6 @@
 from django.db.models import Count
 
 from rest_framework import viewsets, mixins
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -42,7 +41,7 @@ class RecipeIngredientViewSet(mixins.RetrieveModelMixin,
     def get_serializer_class(self):
         if self.action in ['create', 'retrieve']:
             return RecipeIngredientAddSerializer
-        return RecipeIngredientSerializer
+        return RecipeIngredientSerializer    
 
 class RecipeCategoryViewSet(viewsets.ModelViewSet):
     queryset = RecipeCategory.objects.annotate(recipes_count=Count('recipes')).prefetch_related('recipes').order_by('name')

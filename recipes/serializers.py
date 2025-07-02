@@ -35,6 +35,13 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ['id', 'product', 'quantity', 'unit']
 
+    def validate(self, data):
+        recipe = self.instance.recipe
+        product = data['product']
+        if RecipeIngredient.objects.filter(recipe=recipe, product=product).exclude(id=self.instance.id).exists():
+            raise serializers.ValidationError("This product is already in this recipe.")
+        return data
+
 class RecipeIngredientDetailsSerializer(RecipeIngredientSerializer):
     product = SimpleProductSerializer()
 

@@ -25,6 +25,9 @@ class RecipeIngredient(models.Model):
     quantity = models.DecimalField(max_digits=6, decimal_places=2)
     unit = models.CharField(max_length=30, choices=Unit.choices)
 
+    class Meta:
+        unique_together = ('recipe', 'product')
+
     def __str__(self):
         return f"{self.quantity} {self.unit} {self.product.name}"
     
