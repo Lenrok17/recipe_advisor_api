@@ -1,8 +1,10 @@
+from django.db import models
 from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
 
 from recipes.serializers import RecipeSerializer
-from recipes.models import Recipe
+from recipes.models import Recipe, RecipeIngredient
+
 
 from .serializers import FridgeSerializer, FridgeProductSerializer, FridgeProductAddSerializer, FridgeProductUpdateSerializer
 from .models import Fridge, FridgeProduct
@@ -13,14 +15,14 @@ class MyFridgeView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        return Fridge.objects.get(user=self.request.user)
+        return Fridge.objects.prefetch_related('fridge_products__product').get(user=self.request.user)
 
     
 class FridgeProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        return FridgeProduct.objects.filter(fridge__user=self.request.user)
+        return FridgeProduct.objects.filter(fridge__user=self.request.user).prefetch_related('product')
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -38,10 +40,17 @@ class MyFridgeRecipesView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        fridge = Fridge.objects.get(user=self.request.user)
-        fridge_products = fridge.fridge_products.all()
-        recipes = Recipe.objects.prefetch_related('ingredients__product')
+        fridge_products = FridgeProduct.objects \
+            .select_related('product') \
+            .filter(fridge__user=self.request.user)
 
-        possible_recipes_id = [r.id for r in recipes if can_make_recipe(r, fridge_products)]
+        recipes = Recipe.objects \
+            .select_related('category', 'author') \
+            .prefetch_related('ingredients')
 
-        return Recipe.objects.filter(id__in=possible_recipes_id)
+        possible_ids = [
+            r.id for r in recipes
+            if can_make_recipe(r, fridge_products)
+        ]
+
+        return recipes.filter(id__in=possible_ids)

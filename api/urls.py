@@ -12,7 +12,6 @@ urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path('auth/jwt/logout', LogoutView.as_view(), name='jwt-logout'),
-    path('accounts/', include('accounts.urls')),
     path('products/', include('products.urls')),
     path('recipes/', include('recipes.urls')),
     path('fridges/', include('fridges.urls')),
