@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from products.serializers import SimpleProductSerializer
-from .models import Recipe, RecipeCategory, RecipeIngredient
+from .models import Recipe, RecipeCategory, RecipeIngredient, FavouriteRecipe
 
 from products.serializers import SimpleProductSerializer
 
@@ -30,6 +30,18 @@ class RecipeIngredientAddSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ['id', 'recipe', 'product', 'quantity', 'unit']
 
+    def validate(self, data):
+        recipe = data['recipe']
+        product = data['product']
+
+        if recipe.author != self.context['request'].user:
+            raise serializers.ValidationError("You are not the author of this recipe.")
+
+        if RecipeIngredient.objects.filter(recipe=recipe, product=product).exists():
+            raise serializers.ValidationError("This product is already in this recipe.")
+
+        return data
+
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
@@ -53,10 +65,14 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = RecipeIngredientSerializer(many=True, read_only=True)
     author = serializers.CharField(source='author.username', read_only=True)
     category = SimpleRecipeCategorySerializer(read_only=True)
+    number_of_likes = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
-        fields = ['id', 'category', 'title', 'author', 'prepare_time', 'ingredients', 'description', 'image']
+        fields = ['id', 'category', 'title', 'author', 'number_of_likes', 'prepare_time', 'ingredients', 'description', 'image']
+
+    def get_number_of_likes(self, obj):
+        return obj.favouriterecipe_set.count()
 
 class RecipeDetailsSerializer(RecipeSerializer):
     ingredients = RecipeIngredientDetailsSerializer(many=True, read_only=True)
@@ -65,3 +81,26 @@ class RecipeAddUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ['id', 'category', 'title', 'prepare_time', 'description', 'image']
+
+###############################################
+####### FAVOURITE RECIPE SERIALIZERS ##########
+###############################################
+
+class FavouriteRecipeSerializer(serializers.ModelSerializer):
+    recipe = RecipeSerializer(read_only=True)
+
+    class Meta:
+        model = FavouriteRecipe
+        fields = ['id', 'recipe']
+
+class FavouriteRecipeAddSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FavouriteRecipe
+        fields = ['id', 'recipe']
+
+    def validate(self, data):
+        user = self.context['request'].user
+        recipe = data.get('recipe')
+        if FavouriteRecipe.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError("This recipe is already in your favourites.")
+        return data

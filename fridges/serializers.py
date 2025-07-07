@@ -1,5 +1,3 @@
-from django.db import IntegrityError
-
 from rest_framework import serializers
 
 from products.serializers import SimpleProductSerializer
@@ -34,7 +32,7 @@ class FridgeProductUpdateSerializer(serializers.ModelSerializer):
         fridge = self.context['request'].user.fridge
         product = data.get('product', None)
 
-        # Pomijamy aktualny obiekt, żeby nie walidować go na duplikat z samym sobą
+        # Pomijamy aktualny obiekt, żeby nie walidować go na duplikat z samym sobą (w przypadku zmiany quantity lub unit)
         if FridgeProduct.objects.filter(fridge=fridge, product=product).exclude(id=self.instance.id).exists():
             raise serializers.ValidationError("This product is already in your fridge.")
         return data
@@ -46,3 +44,4 @@ class FridgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fridge
         fields = ['id', 'user', 'fridge_products']
+        

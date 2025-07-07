@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings
 from products.models import Product, Unit
 
+from accounts.models import User
+
 class RecipeCategory(models.Model):
     name = models.CharField(max_length=255)
 
@@ -31,3 +33,12 @@ class RecipeIngredient(models.Model):
     def __str__(self):
         return f"{self.quantity} {self.unit} {self.product.name}"
     
+class FavouriteRecipe(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'recipe')
+
+    def __str__(self):
+        return f'{self.user} likes {self.recipe}'

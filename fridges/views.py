@@ -3,7 +3,7 @@ from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
 
 from recipes.serializers import RecipeSerializer
-from recipes.models import Recipe, RecipeIngredient
+from recipes.models import Recipe
 
 
 from .serializers import FridgeSerializer, FridgeProductSerializer, FridgeProductAddSerializer, FridgeProductUpdateSerializer
