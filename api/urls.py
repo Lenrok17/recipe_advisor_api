@@ -9,9 +9,9 @@ from accounts.views import LogoutView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('auth/jwt/logout', LogoutView.as_view(), name='jwt-logout'),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
-    path('auth/jwt/logout', LogoutView.as_view(), name='jwt-logout'),
     path('products/', include('products.urls')),
     path('recipes/', include('recipes.urls')),
     path('fridges/', include('fridges.urls')),
