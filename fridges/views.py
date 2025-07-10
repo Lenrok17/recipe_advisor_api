@@ -1,10 +1,14 @@
 from django.db import models
 from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.filters import OrderingFilter
 
 from recipes.serializers import RecipeSerializer
 from recipes.models import Recipe
 
+from django_filters.rest_framework import DjangoFilterBackend
+
+from recipes.filters import RecipeFilter
 
 from .serializers import FridgeSerializer, FridgeProductSerializer, FridgeProductAddSerializer, FridgeProductUpdateSerializer
 from .models import Fridge, FridgeProduct
@@ -38,6 +42,10 @@ class FridgeProductViewSet(viewsets.ModelViewSet):
 class MyFridgeRecipesView(generics.ListAPIView):
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = RecipeFilter
+    ordering_fields = ['prepare_time', 'title', 'number_of_likes']
+    ordering = ['-number_of_likes']
 
     def get_queryset(self):
         fridge_products = FridgeProduct.objects \
@@ -46,7 +54,8 @@ class MyFridgeRecipesView(generics.ListAPIView):
 
         recipes = Recipe.objects \
             .select_related('category', 'author') \
-            .prefetch_related('ingredients')
+            .prefetch_related('ingredients') \
+            .annotate(number_of_likes=models.Count('favouriterecipe')) \
 
         possible_ids = [
             r.id for r in recipes

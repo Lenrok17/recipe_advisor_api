@@ -62,20 +62,27 @@ class RecipeIngredientDetailsSerializer(RecipeIngredientSerializer):
 ###############################################
 
 class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = RecipeIngredientSerializer(many=True, read_only=True)
     author = serializers.CharField(source='author.username', read_only=True)
     category = SimpleRecipeCategorySerializer(read_only=True)
     number_of_likes = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
-        fields = ['id', 'category', 'title', 'author', 'number_of_likes', 'prepare_time', 'ingredients', 'description', 'image']
+        fields = ['id', 'category', 'title', 'author', 'number_of_likes', 'prepare_time', 'image']
 
     def get_number_of_likes(self, obj):
+        # Jeśli to endpoint z annotate
+        if hasattr(obj, 'number_of_likes'):
+            return obj.number_of_likes
+        # Brak annotate — pojedyncze zliczanie
         return obj.favouriterecipe_set.count()
+
 
 class RecipeDetailsSerializer(RecipeSerializer):
     ingredients = RecipeIngredientDetailsSerializer(many=True, read_only=True)
+
+    class Meta(RecipeSerializer.Meta):
+        fields = RecipeSerializer.Meta.fields + ['ingredients', 'description']
 
 class RecipeAddUpdateSerializer(serializers.ModelSerializer):
     class Meta:

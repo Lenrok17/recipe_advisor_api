@@ -1,5 +1,7 @@
 from django.db.models import Count
 
+from rest_framework.filters import OrderingFilter
+
 from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
@@ -11,21 +13,24 @@ from .serializers import (
 )
 
 from .models import Recipe, RecipeCategory, RecipeIngredient, FavouriteRecipe
-from .filters import RecipeFilter
+from .filters import RecipeFilter, FavouriteRecipeFilter
 from .permissions import IsAuthorOrReadOnly
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = RecipeFilter
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    ordering_fields = ['prepare_time', 'title', 'number_of_likes']
+    ordering = ['-number_of_likes']
+
 
     def get_queryset(self):
-        qs = Recipe.objects.select_related('author', 'category')
+        qs = Recipe.objects.select_related('author', 'category').annotate(number_of_likes=Count('favouriterecipe'))
         if self.action == 'retrieve':            
             return qs.prefetch_related('ingredients__product')
         elif self.action == 'create':
             return qs
-        return qs.prefetch_related('ingredients')
+        return qs
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -62,6 +67,10 @@ class RecipeCategoryViewSet(viewsets.ModelViewSet):
 class FavourtiteRecipesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'post', 'delete']
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = FavouriteRecipeFilter
+    ordering_fields = ['recipe__prepare_time', 'recipe__title']
+    ordering = ['recipe__title']
 
     def get_serializer_class(self):
         if self.action in ['create', 'update']:
