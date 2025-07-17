@@ -58,6 +58,7 @@ class RecipeIngredientViewSet(mixins.RetrieveModelMixin,
 
 class RecipeCategoryViewSet(viewsets.ModelViewSet):
     queryset = RecipeCategory.objects.annotate(recipes_count=Count('recipes')).prefetch_related('recipes').order_by('name')
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action in ['create', 'update']:

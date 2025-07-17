@@ -24,6 +24,7 @@ class MyFridgeView(generics.RetrieveAPIView):
     
 class FridgeProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
+    pagination_class = None
     
     def get_queryset(self):
         return FridgeProduct.objects.filter(fridge__user=self.request.user).prefetch_related('product')

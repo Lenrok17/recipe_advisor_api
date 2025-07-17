@@ -22,6 +22,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 class ProductCategoryViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProductCategoryFilter
+    pagination_class = None
 
     def get_queryset(self):
         if self.action != 'retrieve':

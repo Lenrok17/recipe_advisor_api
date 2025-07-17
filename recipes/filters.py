@@ -5,6 +5,7 @@ class NumberInFilter(django_filters.BaseInFilter, django_filters.NumberFilter):
     pass
 
 class RecipeFilter(django_filters.FilterSet):
+    author = django_filters.CharFilter(field_name='author__username', lookup_expr='exact')
     category = NumberInFilter(field_name='category__id', lookup_expr='in')
     category_name = django_filters.CharFilter(field_name='category__name', lookup_expr='icontains')
     title = django_filters.CharFilter(field_name='title', lookup_expr='icontains')
