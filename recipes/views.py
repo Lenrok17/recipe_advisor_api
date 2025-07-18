@@ -2,17 +2,17 @@ from django.db.models import Count
 
 from rest_framework.filters import OrderingFilter
 
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .serializers import (
-    RecipeCategorySerializer, RecipeIngredientSerializer, RecipeSerializer, 
-    RecipeAddUpdateSerializer, RecipeDetailsSerializer, RecipeIngredientAddSerializer, SimpleRecipeCategorySerializer,
+    RecipeCategorySerializer, RecipeSerializer, 
+    RecipeAddUpdateSerializer, RecipeDetailsSerializer, SimpleRecipeCategorySerializer,
     FavouriteRecipeSerializer, FavouriteRecipeAddSerializer
 )
 
-from .models import Recipe, RecipeCategory, RecipeIngredient, FavouriteRecipe
+from .models import Recipe, RecipeCategory, FavouriteRecipe
 from .filters import RecipeFilter, FavouriteRecipeFilter
 from .permissions import IsAuthorOrReadOnly
 
@@ -38,23 +38,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
         elif self.action in ['create', 'update']:
             return RecipeAddUpdateSerializer
         return RecipeSerializer
-    
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
 
-class RecipeIngredientViewSet(mixins.RetrieveModelMixin,
-                              mixins.CreateModelMixin,
-                              mixins.UpdateModelMixin,
-                              mixins.DestroyModelMixin,
-                              viewsets.GenericViewSet):
-    
-    queryset = RecipeIngredient.objects.all()
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+class MyRecipesView(generics.ListAPIView):
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = RecipeFilter
+    permission_classes = [IsAuthenticated]
+    serializer_class = RecipeSerializer
+    ordering_fields = ['prepare_time', 'title', 'number_of_likes']
+    ordering = ['-number_of_likes']
 
-    def get_serializer_class(self):
-        if self.action in ['create', 'retrieve']:
-            return RecipeIngredientAddSerializer
-        return RecipeIngredientSerializer
+    def get_queryset(self):
+        user = self.request.user
+        qs = Recipe.objects \
+            .select_related('author', 'category') \
+            .annotate(number_of_likes=Count('favouriterecipe')) \
+            .filter(author=user)
+        return qs
 
 class RecipeCategoryViewSet(viewsets.ModelViewSet):
     queryset = RecipeCategory.objects.annotate(recipes_count=Count('recipes')).prefetch_related('recipes').order_by('name')

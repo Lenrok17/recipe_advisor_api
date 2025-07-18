@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from products.serializers import SimpleProductSerializer
@@ -25,34 +26,10 @@ class SimpleRecipeCategorySerializer(serializers.ModelSerializer):
 ##### RECIPE INGREDIENTS SERIALIZERS ##########
 ###############################################
 
-class RecipeIngredientAddSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RecipeIngredient
-        fields = ['id', 'recipe', 'product', 'quantity', 'unit']
-
-    def validate(self, data):
-        recipe = data['recipe']
-        product = data['product']
-
-        if recipe.author != self.context['request'].user:
-            raise serializers.ValidationError("You are not the author of this recipe.")
-
-        if RecipeIngredient.objects.filter(recipe=recipe, product=product).exists():
-            raise serializers.ValidationError("This product is already in this recipe.")
-
-        return data
-
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = ['id', 'product', 'quantity', 'unit']
-
-    def validate(self, data):
-        recipe = self.instance.recipe
-        product = data['product']
-        if RecipeIngredient.objects.filter(recipe=recipe, product=product).exclude(id=self.instance.id).exists():
-            raise serializers.ValidationError("This product is already in this recipe.")
-        return data
 
 class RecipeIngredientDetailsSerializer(RecipeIngredientSerializer):
     product = SimpleProductSerializer()
@@ -85,9 +62,44 @@ class RecipeDetailsSerializer(RecipeSerializer):
         fields = RecipeSerializer.Meta.fields + ['ingredients', 'description']
 
 class RecipeAddUpdateSerializer(serializers.ModelSerializer):
+    ingredients = RecipeIngredientSerializer(many=True, write_only=True)
+
     class Meta:
         model = Recipe
-        fields = ['id', 'category', 'title', 'prepare_time', 'description', 'image']
+        fields = ['id', 'category', 'title', 'prepare_time', 'ingredients', 'description', 'image']
+
+    def validate_ingredients(self, value):
+        if not value:
+            raise serializers.ValidationError("You have to add at least one product.")
+        product_ids = [v['product'].id for v in value]
+        if len(product_ids) != len(set(product_ids)):
+            raise serializers.ValidationError("You cannot add the same product twice.")
+        return value
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        recipe = Recipe.objects.create(**validated_data, author=self.context['request'].user)
+        self._create_ingredients(recipe, ingredients)
+        return recipe
+
+    def _create_ingredients(self, recipe, ingredients):
+        for ingredient in ingredients:
+            RecipeIngredient.objects.create(recipe=recipe, **ingredient)
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if ingredients is not None:
+            instance.ingredients.all().delete()
+            self._create_ingredients(instance, ingredients)
+
+        return instance
 
 ###############################################
 ####### FAVOURITE RECIPE SERIALIZERS ##########
