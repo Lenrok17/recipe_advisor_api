@@ -1,4 +1,4 @@
-# 🍽️ Recipe API
+# 🍽️ Recipe Advisor API
 
 API do zarządzania przepisami kulinarnymi, produktami i lodówką użytkownika. Projekt umożliwia tworzenie i przeglądanie przepisów, dodawanie ich do ulubionych oraz dopasowywanie przepisów na podstawie zawartości lodówki. Idealne dla osób, które nie wiedzą, co przygotować do jedzenia.
 
