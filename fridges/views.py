@@ -19,7 +19,15 @@ class MyFridgeView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        return Fridge.objects.prefetch_related('fridge_products__product').get(user=self.request.user)
+        # Pobierz fridge wraz z posortowanymi fridge_products po nazwie produktu
+        fridge = Fridge.objects.prefetch_related(
+            models.Prefetch(
+                'fridge_products',
+                queryset=FridgeProduct.objects.select_related('product').order_by('product__name')
+            )
+        ).get(user=self.request.user)
+        return fridge
+
 
     
 class FridgeProductViewSet(viewsets.ModelViewSet):
